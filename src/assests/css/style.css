@@ -51,6 +51,9 @@
 
 }
 
+body{
+    background-color: rgb(39, 36, 36);
+}
 @keyframes overlay {
     from {background-color: black; opacity: 1;}
     to {background-color: black; opacity: 0;}
