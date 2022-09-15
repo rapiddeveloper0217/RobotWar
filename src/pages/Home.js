@@ -1,16 +1,19 @@
-import robot from "../assests/image/Robot A.png";
-import logo from "../assests/image/rfwlogo.png";
-import phantomLogo from "../assests/image/Phantom wallet Logo.png";
-import tick from "../assests/image/tick-mark-icon.png";
-import wrong from "../assests/image/incorrect-icon.png";
+import robot from "../assets/image/Robot A.png";
+import logo from "../assets/image/rfwlogo.png";
+import phantomLogo from "../assets/image/Phantom wallet Logo.png";
+import tick from "../assets/image/tick-mark-icon.png";
+import wrong from "../assets/image/incorrect-icon.png";
 
+import { Link } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { Connection, PublicKey } from "@solana/web3.js";
 import bs58 from "bs58";
 
+const mintAddresses = require("../assets/mintAddresses.json");
 const Home = () => {
   // solana web3
+
   const connection = new Connection(
     "https://solana-api.projectserum.com",
     "confirmed"
@@ -91,22 +94,23 @@ const Home = () => {
   //------------- AUDIO -----------------
   const audioEnded = (e) => {
     if (e.target.id == "textAudio") {
-      setTimeout(() => {
-        e.target.play();
-        e.target.currentTime = Math.random() * 0.1;
-      }, Math.random() * 150);
+      e.target.play();
+      // setTimeout(() => {
+      //   e.target.currentTime = Math.random() + 1;
+      //   e.target.play();
+      // }, 0);
     }
   };
   //---------------------------------------
   const texts = [
-    "Hello Pilots! \nMy name is Force of Rendition, and I’m an Intelligence Robot assigned to you by Admiral Miltron to help you burn your Gen 1 Robots and obtain in exchange a Fusion Core! If you are deemed worthy of course…",
-    "First let’s check you are holding the correct NFTs! \nPlease connect your Solana Wallet so we can verify ownership..",
-    "ERROR! No RFW Gen. 1 Robots found. \nPlease go to Magic Eden and get at least 2 RFW robots",
-    "SUCCESS! Two or more RFW Gen. \nWelcome to our burning facility! Please find your way through the Maze in order to get to the Lab! We will be waiting.",
-    "You are as we once were, suitless. Robotless. Find your way through the maze in your mind to achieve enlightenment.",
+    "Mysterious girl: \nHello, you must be the new recruit. Admiral Miltron asked me to take you to the Fusion Facility. But we have to make sure you are combat ready",
+    "Mysterious girl: \nThis facility is not for everyone. You must have at least two Robots to continue. We will check your wallet to make sure you are holding the correct NFTs",
+    "Mysterious girl: \nEIt looks like you don’t have enough Robots.. This was expected. I’ve always said they were making a mistake by bringing you here. Come back when you are not Botless",
+    "Mysterious girl: \nOk, at least you have Robots and it looks like you can pilot them. Now, we have to cross the Maze to get to the Fusion Facility. Come! They are waiting for us",
+    "Mysterious girl: You are as we once were, suitless. Robotless. Find your way through the maze in your mind to achieve enlightenment.",
   ];
-  //const magicedenlink = "https://magiceden.io/marketplace/robot_factory_works";
-  const magicedenlink = "/maze";
+  const magicedenlink = "https://magiceden.io/marketplace/robot_factory_works";
+  // const magicedenlink = "/maze";
   const mazegamelink = "/maze";
 
   const [loaded, setLoaded] = useState(false);
@@ -117,6 +121,7 @@ const Home = () => {
   const [walletAddress, setAddress] = useState("null");
   const [nfts, setNft] = useState(0);
   const [nftLoading, setNftState] = useState(false);
+  const [started, setStarted] = useState(false);
 
   const memoryText = useRef("");
 
@@ -136,6 +141,10 @@ const Home = () => {
   };
 
   const nextStage = (nftCount) => {
+    // if (stage == 1) return;
+    if (stage == 4) {
+      return;
+    }
     document.getElementById("textAudio").pause();
     memoryText.current = "";
     setAnimatedText("");
@@ -147,6 +156,7 @@ const Home = () => {
     setTimeout(() => {
       document.getElementById("overlay").classList.add("m-overlay");
     }, 10);
+
     stopHandler();
     setTimeout(() => {
       //   if (stage <= 2) setStage(stage + 1);
@@ -156,8 +166,9 @@ const Home = () => {
       else if (stage == 1) {
         if (nftCount >= 2) setStage(3);
         else {
-          if (nftCount == -1) setStage(2);
-          else startHandler();
+          // if (nftCount == -1) setStage(2);
+          // else startHandler();
+          setStage(2);
         }
       } else if (stage >= 3) setStage(4);
       else if (stage == 2) startHandler();
@@ -174,25 +185,30 @@ const Home = () => {
         return response.publicKey.toString();
       } catch (err) {
         // { code: 4001, message: 'User rejected the request.' }
-        return false;
+        return -1;
       }
     } else {
-      window.open("https://phantom.app");
+      return -2;
     }
   };
   const NftSearch = async () => {
     // stopHandler();
     const response = await connectWallet();
+    if (response == -2) {
+      window.open("https://phantom.app");
+      return;
+    } else if (response == -1) {
+      return;
+    }
     setNftState(true);
-    const tokenAddresses = await getNFTOwners();
-
+    // const tokenAddresses = await getNFTOwners();
+    const tokenAddresses = mintAddresses;
     console.log(tokenAddresses);
-
     let nftCount = 0;
-    if (response != false) {
+    if (response) {
       const options_collection = {
         method: "GET",
-        // url: `https://solana-gateway.moralis.io/account/mainnet/${"BVeW4acywphzXb3tPUtZsMDmGVm85uzP1Zo2HBbveLYS"}/nft`,
+        // url: `https://solana-gateway.moralis.io/account/mainnet/${"31RwP1gBSNky1o7Yz6DYqUYwc9zNT9Fhcioa6FTKSUsj"}/nft`,
         url: `https://solana-gateway.moralis.io/account/mainnet/${response}/nft`,
         headers: {
           Accept: "application/json",
@@ -210,17 +226,13 @@ const Home = () => {
               setNft(nftCount);
             }
             console.log(collection.mint);
-            // if (nftCount >= 2) {
-            //   break;
-            // }
-          } catch {
-            //
-          }
+          } catch {}
         }
 
         setTimeout(() => {
           setNftState(false);
-          nftCount == 0 ? nextStage(-1) : nextStage(nftCount);
+          nextStage(nftCount);
+          // nftCount <= 1 ? nextStage(-1) : nextStage(nftCount);
         }, 500);
       } catch {
         //
@@ -231,7 +243,7 @@ const Home = () => {
   useEffect(() => {
     // startHandler();
     // setTimeout(()=>{startHandler();},2000);
-    if (text != texts[0]) startHandler();
+    if (text != texts[0] || started == true) startHandler();
   }, [text]);
 
   useEffect(() => {
@@ -247,7 +259,10 @@ const Home = () => {
       document.getElementById("textAudio").pause();
     }
   });
-  useEffect(() => {}, []);
+  useEffect(() => {
+    document.getElementById("errorFound").volume = 0.2;
+    document.getElementById("textAudio").volume = 0.1;
+  }, []);
 
   return (
     <div>
@@ -260,6 +275,7 @@ const Home = () => {
           onClick={(e) => {
             e.target.parentElement.parentElement.style.display = "none";
             startHandler();
+            setStarted(true);
             document.getElementById("textAudio").play();
           }}
         >
@@ -269,16 +285,18 @@ const Home = () => {
       <div
         id="overlay"
         className="m-overlay h-screen w-full z-20"
-        onClick={nextStage}
+        onClick={() => {
+          if (stage != 1) nextStage();
+        }}
       ></div>
       <div className="m-background h-screen w-full flex justify-center items-start">
         <img src={logo} className="w-28 mt-10 sm:w-40" alt="logo" />
       </div>
       <div className="h-screen w-full flex justify-start items-center">
-        <div className="relative flex items-end justify-around">
+        <div className="relative flex items-end justify-around m-robot">
           <img
             src={robot}
-            className="w-30 sm:w-[600px] m-robot mb-20"
+            className="w-[400px] sm:w-[400px]mb-20"
             alt="robot"
           />
           {(() => {
@@ -295,11 +313,10 @@ const Home = () => {
         className="m-text rounded-sm m-auto inset-x-0 bottom-0 h-1/5"
         value={animatedText}
       ></textarea>
-
-      {loaded && (stage == 2 || stage == 3) ? (
+      {loaded && stage == 2 ? (
         <a
           className="shadow w-[100px] sm:w-60 absolute z-30 bottom-0 inset-x-0 m-auto"
-          href={stage == 2 ? magicedenlink : mazegamelink}
+          href={magicedenlink}
         >
           <img
             src="https://static.wixstatic.com/media/08b2eb_cb1a45a8bb3a41fda62a306c7015ed8f~mv2.gif"
@@ -307,6 +324,20 @@ const Home = () => {
             className="hover:cursor-pointer"
           />
         </a>
+      ) : (
+        ""
+      )}
+      {(loaded && stage == 3) || stage == 4 ? (
+        <Link
+          className="shadow w-[100px] sm:w-60 absolute z-30 bottom-0 inset-x-0 m-auto"
+          to={mazegamelink}
+        >
+          <img
+            src="https://static.wixstatic.com/media/08b2eb_cb1a45a8bb3a41fda62a306c7015ed8f~mv2.gif"
+            alt="click here"
+            className="hover:cursor-pointer"
+          />
+        </Link>
       ) : (
         ""
       )}
@@ -350,19 +381,21 @@ const Home = () => {
 
       <audio
         id="textAudio"
-        className="absolute z-40"
-        src="assets/sounds/textmoving.wav"
+        className="absolute z-40 hidden"
+        src="/assets/Sounds/Textmoving.mp3"
         onEnded={audioEnded}
         controls
+        hidden
       ></audio>
 
       <audio
         id="errorFound"
-        className="absolute z-40"
-        src="assets/sounds/Error no RFW found.wav"
+        className="absolute z-40 hidden"
+        src="assets/Sounds/Error no RFW found.wav"
         onEnded={audioEnded}
         controls
         loop
+        hidden
       ></audio>
     </div>
     //assets/sounds/textmoving.wav

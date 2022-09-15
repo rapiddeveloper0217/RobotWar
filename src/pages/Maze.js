@@ -86,11 +86,16 @@ const Maze = () => {
     this.load.image("tiles", "assets/materials/wall.png");
     this.load.image("red", "https://labs.phaser.io/assets/particles/red.png");
     this.load.image("star", "assets/materials/star.png");
-    this.load.spritesheet(
-      "player",
-      "https://labs.phaser.io/assets/sprites/spaceman.png",
-      { frameWidth: 16, frameHeight: 16 }
-    );
+    this.load.spritesheet("player", "assets/materials/player.png", {
+      frameWidth: 107,
+      frameHeight: 132,
+    });
+    // this.load.spritesheet(
+    //   "player",
+    //   "https://labs.phaser.io/assets/sprites/spaceman.png",
+    //   { frameWidth: 16, frameHeight: 16 }
+    // );
+
     this.load.tilemapCSV(
       "map",
       "assets/maps/grid" + (Math.random() > 0.5 ? 1 : 2) + ".csv"
@@ -122,25 +127,31 @@ const Maze = () => {
 
     this.anims.create({
       key: "left",
-      frames: this.anims.generateFrameNumbers("player", { start: 8, end: 9 }),
+      frames: this.anims.generateFrameNumbers("player", { start: 3, end: 5 }),
       frameRate: 10,
-      repeat: -1,
+      repeat: 0,
     });
     this.anims.create({
       key: "right",
-      frames: this.anims.generateFrameNumbers("player", { start: 1, end: 2 }),
+      frames: this.anims.generateFrameNumbers("player", { start: 6, end: 8 }),
       frameRate: 10,
-      repeat: -1,
+      repeat: 0,
     });
     this.anims.create({
       key: "up",
-      frames: this.anims.generateFrameNumbers("player", { start: 11, end: 13 }),
+      frames: this.anims.generateFrameNumbers("player", { start: 9, end: 11 }),
+      frameRate: 10,
+      repeat: 0,
+    });
+    this.anims.create({
+      key: "down",
+      frames: this.anims.generateFrameNumbers("player", { start: 0, end: 2 }),
       frameRate: 10,
       repeat: -1,
     });
     this.anims.create({
-      key: "down",
-      frames: this.anims.generateFrameNumbers("player", { start: 4, end: 6 }),
+      key: "pause",
+      frames: this.anims.generateFrameNumbers("player", { start: 1, end: 1 }),
       frameRate: 10,
       repeat: -1,
     });
@@ -157,7 +168,7 @@ const Maze = () => {
       depth: 0,
     });
 
-    player = this.physics.add.sprite(48, 48, "player", 1).setScale(1.5, 1.5);
+    player = this.physics.add.sprite(48, 48, "player", 1).setScale(0.22, 0.22);
     player.body.setBounce(0.2);
     // player.body.setCollideWorldBounds(true);
     player.body.setDrag(3000, 0);
@@ -166,7 +177,7 @@ const Maze = () => {
     this.cameras.main.startFollow(player);
 
     this.physics.add.collider(player, layer, mapCollider, null, this);
-    emitter.startFollow(player.body, 8, 8);
+    emitter.startFollow(player.body, 12, 24);
 
     this.add.image(16, 48, "start").setScale(1 / 16, 1 / 16);
 
@@ -218,6 +229,8 @@ const Maze = () => {
       walkingSound.play();
       player.anims.play("right", true);
     } else {
+      player.anims.play("pause", true);
+      // player.anims.stop();
       walkingSound.pause();
     }
 
@@ -232,10 +245,12 @@ const Maze = () => {
       if (player.body.blocked.down) {
         totalJump = 0;
         player.setVelocityY(-jumpSpeed);
+        // player.anims.play("up", true);
       } else {
         if (totalJump < 20) {
           player.setVelocityY(-jumpSpeed);
           totalJump++;
+          // player.anims.play("up", true);
         } else {
           fallSpeed = 1;
           totalJump = 0;
@@ -256,7 +271,7 @@ const Maze = () => {
     teleportSound.play();
     star.disableBody(true, true);
     setTimeout(() => {
-      window.open("http://localhost:3000/mario");
+      window.open("http://burn.robotfactory.works/", "_self");
     }, 1000);
   }
 

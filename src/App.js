@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Maze from "./pages/Maze";
 import Mario from "./pages/Mario";
+import Snake from "./pages/Snake/Snake";
 export default function App() {
   return (
     <BrowserRouter>
@@ -9,6 +10,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="maze" element={<Maze />} />
         <Route path="Mario" element={<Mario />} />
+        <Route path="Snake" element={<Snake />} />
       </Routes>
     </BrowserRouter>
   );

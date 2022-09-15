@@ -8,11 +8,19 @@
     background-repeat: no-repeat;
 }
 .m-robot{
+    margin: 10%;
+    height: 70%;
+}
+.m-robot img{
     border-bottom-right-radius: 30%;
     border-top-right-radius: 50%;
-
     
 }
+.m-z-index{
+    /* position: relative; */
+    z-index: 50 !important;
+}
+
 .m-text{
     background-color: rgb(14, 9, 4);
     color: white;

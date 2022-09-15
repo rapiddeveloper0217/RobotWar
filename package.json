@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@babel/plugin-syntax-bigint": "^7.8.3",
     "@metaplex-foundation/js": "^0.15.0",
     "@solana/web3.js": "^1.56.2",
     "@testing-library/jest-dom": "^5.16.5",
@@ -42,9 +43,9 @@
   },
   "browserslist": {
     "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
     ],
     "development": [
       "last 1 chrome version",
@@ -57,5 +58,9 @@
     "postcss": "^8.4.16",
     "react-router-dom": "^6.3.0",
     "tailwindcss": "^3.1.8"
-  }
+  },
+  "plugins": [
+    "@babel/plugin-syntax-bigint"
+  ]
+  
 }
