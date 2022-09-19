@@ -13,10 +13,65 @@ export default class Game extends Phaser.Scene {
     this.rollFlag = false;
     this.moveFlag = false;
     this.endFlag = false;
+
+    // coins
+    this.coins = null;
+    // this.sol =
+    //text
+    this.text = null;
     console.log(mapPosition);
   }
 
-  throwDice() {
+  getCoin = (player, coin) => {
+    if (
+      this.moveFlag == false &&
+      this.rollFlag == false &&
+      coin.x == player.x &&
+      coin.y == player.y
+    ) {
+      var type = mapPosition[this.currentPos].type;
+      var coinFlag = false;
+      var sol = 0;
+      if (type == "gold") {
+        sol = 100;
+        coinFlag = true;
+      }
+      if (type == "silver") {
+        sol = 10;
+        coinFlag = true;
+      }
+      if (type == "bronze") {
+        sol = 5;
+        coinFlag = true;
+      }
+      if (type == "red") {
+        sol = 1;
+        coinFlag = true;
+      }
+      if (coinFlag == true) {
+        this.tweens.add({
+          targets: coin,
+          y: coin.y - 100,
+          duration: Phaser.Math.Between(500, 1000),
+          ease: "Power1",
+          onComplete: function () {
+            coin.disableBody(true, true);
+          },
+        });
+        this.text.setText(`You got ${sol}!`);
+        this.tweens.add({
+          targets: this.text,
+          alpha: 1,
+          yoyo: true,
+          hold: 500,
+          duration: 1000,
+          ease: "Power1",
+        });
+        // this.text.alpha = 1;
+      }
+    }
+  };
+  throwDice = () => {
     // this.currentSide = Math.floor(Math.random() * 5 + 1);
     // this.dice.setFrame(this.currentSide);
     this.rollFlag = true;
@@ -24,22 +79,27 @@ export default class Game extends Phaser.Scene {
       this.rollFlag = false;
       this.moveTo();
     }, 1000);
-  }
-  moveTo = () => {
-    if (this.currentPos + this.currentSide >= 36) return;
-    this.currentPos += this.currentSide;
-    const newPos = this.currentPos;
+  };
+
+  moveFromTo = (to, duration) => {
     this.moveFlag = true;
     this.tweens.add({
       targets: this.player,
-      x: mapPosition[newPos].x,
-      y: mapPosition[newPos].y,
+      x: mapPosition[to].x,
+      y: mapPosition[to].y,
       ease: "Power1",
-      duration: this.currentSide * 300,
+      duration: duration,
     });
     setTimeout(() => {
       this.moveFlag = false;
-    }, this.currentSide * 300 + 50);
+      this.currentPos = to;
+    }, duration + 50);
+  };
+  moveTo = () => {
+    const newPos = this.currentPos + this.currentSide;
+    if (newPos >= 36) return;
+    for (var i = 0; i <= newPos; i++)
+      this.moveFromTo(newPos, this.currentSide * 300);
   };
 
   preload() {
@@ -52,6 +112,23 @@ export default class Game extends Phaser.Scene {
     this.load.spritesheet("player", "/snake/materials/player.png", {
       frameWidth: 108,
       frameHeight: 130,
+    });
+    //coin
+    this.load.spritesheet("gold", "/snake/materials/gold.png", {
+      frameWidth: 72,
+      frameHeight: 72,
+    });
+    this.load.spritesheet("red", "/snake/materials/red.png", {
+      frameWidth: 72,
+      frameHeight: 72,
+    });
+    this.load.spritesheet("bronze", "/snake/materials/bronze.png", {
+      frameWidth: 72,
+      frameHeight: 72,
+    });
+    this.load.spritesheet("silver", "/snake/materials/silver.png", {
+      frameWidth: 72,
+      frameHeight: 72,
     });
   }
   create() {
@@ -87,11 +164,80 @@ export default class Game extends Phaser.Scene {
       console.log(ptr.x, ptr.y);
     });
     this.dice = this.add.sprite(640, 900, "dice");
+
+    this.coins = this.physics.add.group();
+    // this.coins.add(this.dice);
+    // this.coins = this.physics.add.group(this);
+
+    // this.coin.enableBody = true;
+    //
+
+    // this.anims.create({
+    //   key: "left",
+    //   frames: this.anims.generateFrameNumbers("player", { start: 3, end: 5 }),
+    //   frameRate: 10,
+    //   repeat: 0,
+    // });
+    // this.player.anims.play("left");
+
+    mapPosition.forEach((pos, index) => {
+      // this.add.text(pos.x, pos.y, index, { color: "#ff00ff" });
+
+      if (
+        pos.type == "gold" ||
+        pos.type == "bronze" ||
+        pos.type == "red" ||
+        pos.type == "silver"
+      ) {
+        var scale = 1;
+        if (pos.type == "gold") scale = 0.8;
+        if (pos.type == "silver") scale = 0.6;
+        if (pos.type == "bronze") scale = 0.5;
+        if (pos.type == "red") scale = 0.4;
+        var config = {
+          key: "flip",
+          // duration:5
+          frames: this.anims.generateFrameNumbers(pos.type),
+          frameRate: 8,
+          repeat: -1,
+          delay: Math.random() * 800,
+        };
+        var coinItem = this.physics.add
+          .sprite(pos.x, pos.y, pos.type)
+          .setScale(scale, scale);
+        coinItem.anims.create(config);
+        coinItem.anims.play("flip");
+        this.coins.add(coinItem);
+      }
+
+      this.physics.add.overlap(this.player, this.coins, this.getCoin);
+      // coinItem.anims.create({ key: "run", duration: 30 });
+
+      // coinItem.anims.play({ key: "run", frameRate: 24 });
+      // coinItem.play("flip");
+      this.text = this.add
+        .text(640, 50, "You got 100 sol!", {
+          color: "#ffff00",
+          fontSize: 50,
+        })
+        .setOrigin(0.5, 0.5);
+      this.text.alpha = 0;
+    });
   }
   update() {
     if (this.rollFlag == true) {
       this.currentSide = Math.floor(Math.random() * 5 + 1);
       this.dice.setFrame(this.currentSide - 1);
+    }
+    if (this.moveFlag == false && this.rollFlag == false) {
+      if (
+        mapPosition[this.currentPos].type == "ladder" ||
+        mapPosition[this.currentPos].type == "snake"
+      ) {
+        let st = this.currentPos;
+        let en = mapPosition[this.currentPos].to;
+        this.moveFromTo(en, (en - st) * 300);
+      }
     }
   }
 }
