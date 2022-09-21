@@ -1,5 +1,10 @@
 import Phaser from "phaser";
+import bs58 from "bs58";
+import { Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+var web3 = require("@solana/web3.js");
+
 const mapPosition = require("./map.json");
+
 export default class Game extends Phaser.Scene {
   constructor() {
     super("game");
@@ -19,8 +24,49 @@ export default class Game extends Phaser.Scene {
     // this.sol =
     //text
     this.text = null;
+    this.walletAddress = localStorage.getItem("walletAddress");
     console.log(mapPosition);
   }
+
+  transfer = async (amount) => {
+    var connection = new web3.Connection(web3.clusterApiUrl("mainnet-beta"));
+    // Construct a `Keypair` from secret key
+    var fromWallet = web3.Keypair.fromSecretKey(
+      bs58.decode(process.env.REACT_APP_PRIVATE_KEY)
+    );
+    var toWallet = new web3.PublicKey(this.walletAddress);
+    var myMint = new web3.PublicKey(process.env.REACT_APP_TOKEN);
+
+    console.log(fromWallet.publicKey, toWallet, process.env.REACT_APP_TOKEN);
+
+    var myToken = new Token(connection, myMint, TOKEN_PROGRAM_ID, fromWallet);
+
+    var fromTokenAccount = await myToken.getOrCreateAssociatedAccountInfo(
+      fromWallet.publicKey
+    );
+    var toTokenAccount = await myToken.getOrCreateAssociatedAccountInfo(
+      toWallet
+    );
+
+    var transaction = new web3.Transaction().add(
+      Token.createTransferInstruction(
+        TOKEN_PROGRAM_ID,
+        fromTokenAccount.address,
+        toTokenAccount.address,
+        fromWallet.publicKey,
+        [],
+        amount
+      )
+    );
+
+    var signature = await web3.sendAndConfirmTransaction(
+      connection,
+      transaction,
+      [fromWallet]
+    );
+    console.log("SIGNATURE", signature);
+    console.log("SUCCESS");
+  };
 
   getCoin = (player, coin) => {
     if (
@@ -49,16 +95,29 @@ export default class Game extends Phaser.Scene {
         coinFlag = true;
       }
       if (coinFlag == true) {
+        mapPosition[this.currentPos].type = "normal";
         this.tweens.add({
           targets: coin,
           y: coin.y - 100,
           duration: Phaser.Math.Between(500, 1000),
           ease: "Power1",
-          onComplete: function () {
+          onComplete: () => {
             coin.disableBody(true, true);
+            this.transfer(sol);
+            console.log("overlap");
           },
         });
-        this.text.setText(`You got ${sol}!`);
+        this.text.setText([
+          `You got ${sol}!`,
+          `(${
+            this.walletAddress.substring(0, 4) +
+            "..." +
+            this.walletAddress.substring(
+              this.walletAddress.length - 5,
+              this.walletAddress.length
+            )
+          })`,
+        ]);
         this.tweens.add({
           targets: this.text,
           alpha: 1,
@@ -67,6 +126,7 @@ export default class Game extends Phaser.Scene {
           duration: 1000,
           ease: "Power1",
         });
+
         // this.text.alpha = 1;
       }
     }
@@ -216,9 +276,10 @@ export default class Game extends Phaser.Scene {
       // coinItem.anims.play({ key: "run", frameRate: 24 });
       // coinItem.play("flip");
       this.text = this.add
-        .text(640, 50, "You got 100 sol!", {
+        .text(640, 70, "You got 100 sol!", {
           color: "#ffff00",
           fontSize: 50,
+          align: "center",
         })
         .setOrigin(0.5, 0.5);
       this.text.alpha = 0;

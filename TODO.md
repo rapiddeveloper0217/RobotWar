@@ -5,6 +5,14 @@
 2 tile 10 ✔
 3 tile 5 ✔
 6 tile 1 ✔
+
+
 6 tile for extra roll
+
 1 tile kills you robot.
+
 5 tiles you go you jail 
+
+Deposit SOL.
+
+CHECK NFT robots
